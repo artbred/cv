@@ -110,5 +110,5 @@ async def download(
     if label is None:
         raise HTTPException(404, "Can't find requested cv, try to request once more")
 
-    asyncio.create_task(save_download_by_label_id(label.id))
+    asyncio.create_task(save_download_by_label_id(label.id, utm_source, utm_campaign))
     return FileResponse(label.path_to_file, filename=label.file_name, content_disposition_type="attachment")

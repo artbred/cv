@@ -35,50 +35,40 @@ def redis_connection_decorator(func):
     return wrapper
 
 
-# TODO Get rid of it
-def decode_redis_data(src):
-    if isinstance(src, list):
-        rv = list()
-        for key in src:
-            rv.append(decode_redis_data(key))
-        return rv
-    elif isinstance(src, dict):
-        rv = dict()
-        for key in src:
-            rv[key.decode()] = decode_redis_data(src[key])
-        return rv
-    elif isinstance(src, bytes):
-        try:
-            return src.decode(encoding="latin-1")
-        except:
-            return src.decode()
-    else:
-        raise Exception("type not handled: " + type(src))
-
-
 @redis_connection_decorator
-def save_utm_params(path, params_str, conn: redis.StrictRedis = None, timestamp=int(time.time())):
+def save_utm_params(path, params_str, conn: redis.StrictRedis = None):
+    timestamp=int(time.time())
+
     key = f"{utm_params_set_prefix_key}{path}"
     data = {"timestamp": timestamp, "utm_params": params_str}
     conn.zadd(key, {json.dumps(data): timestamp})
 
 
 @redis_connection_decorator
-async def save_query_position(
-    positon: str, score: float, most_similar_label_id: str, conn: redis.StrictRedis = None, timestamp=int(time.time())
-):
+async def save_query_position(positon: str, score: float, most_similar_label_id: str, conn: redis.StrictRedis = None):
+    timestamp=int(time.time())
+
     data = {
         "query_position": positon,
         "score": score,
         "most_similar_label_id": most_similar_label_id,
         "timestamp": timestamp,
     }
+
     conn.zadd(query_positions_set_key, {json.dumps(data): timestamp})
 
 
 @redis_connection_decorator
-async def save_download_by_label_id(label_id: str, conn: redis.StrictRedis = None, timestamp=int(time.time())):
+async def save_download_by_label_id(label_id: str, utm_source = None, utm_campaign = None, conn: redis.StrictRedis = None):
+    timestamp=int(time.time())
     data = {"timestamp": timestamp, "label_id": label_id}
+
+    if utm_source:
+        data['utm_source'] = utm_source
+    
+    if utm_campaign:
+        data['utm_campaign'] = utm_campaign
+
     conn.zadd(downloads_by_label_id_set_key, {json.dumps(data): timestamp})
 
 
@@ -100,8 +90,9 @@ def save_label_to_redis(label_hash, conn: redis.StrictRedis = None):
 
 
 @redis_connection_decorator
-def load_label_by_id(key, conn: redis.Redis = None):
-    return decode_redis_data(conn.hgetall(key))
+def load_label_by_id(key, conn: redis.StrictRedis = None):
+    label_hash = conn.hgetall(key)
+    return {key.decode(encoding="latin-1"): value.decode(encoding="latin-1") for key, value in label_hash.items()}
 
 
 @redis_connection_decorator
