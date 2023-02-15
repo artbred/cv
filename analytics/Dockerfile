@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     software-properties-common \
     git \
+    jupyter \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install --upgrade pip

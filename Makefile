@@ -11,3 +11,8 @@ up: rebuild
 .PHONY: populate
 populate:
 	docker-compose exec app python3 populate.py $(FLUSH)
+
+# Collect data using jupyter notebook
+.PHONY: collect
+collect:
+	docker-compose exec analytics jupyter 
