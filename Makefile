@@ -15,4 +15,4 @@ populate:
 # Collect data using jupyter notebook
 .PHONY: collect
 collect:
-	docker-compose exec analytics jupyter 
+	docker-compose exec analytics jupyter nbconvert --to notebook --inplace --execute data.ipynb 
