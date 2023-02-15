@@ -5,12 +5,11 @@ from settings import create_id, min_similarity_score
 from storage import create_redis_connection, init_index, labels_prefix_key
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--flush", action="store_true", help="Clear redis and initialize new schema")
+parser.add_argument("-f", "--flush", action="store_true", default="False", help="Clear redis and initialize new schema")
 args = parser.parse_args()
 
 if args.flush:
     init_index()
-
 
 position_labels = [
     Label(

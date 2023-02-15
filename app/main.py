@@ -47,20 +47,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.middleware("http")
-async def query_param_middleware(request: Request, call_next):
-    async def background_task(request):
-        query_params = request.query_params
-        utm_tags = {}
+async def utm_params_middleware(request: Request, call_next):
+    endpoint = request.url.path.replace("/", "")
+    query_params = request.query_params
+    utm_params = {}
 
-        for key in query_params:
-            if key in known_utm_tags and len(query_params[key]) < 50:
-                utm_tags[key] = query_params[key]
+    for key in query_params:
+        if key in known_utm_tags and len(query_params[key]) < 50:
+            utm_params[key] = query_params[key]
 
-        if len(utm_tags) > 0:
-            path = request.url.path.replace("/", "")
-            save_utm_params(path, utm_tags)
+    if len(utm_params) > 0:
+        request.state.utm_params = utm_params
+        asyncio.create_task(save_utm_params(endpoint, utm_params))
 
-    asyncio.create_task(background_task(request))
     return await call_next(request)
 
 
@@ -99,7 +98,7 @@ async def score_position(
 
 @app.post("/download")
 async def download(
-    download_req: DownloadRequest, utm_source: Union[str, None] = None, utm_campaign: Union[str, None] = None
+    request: Request, download_req: DownloadRequest, utm_source: Union[str, None] = None, utm_campaign: Union[str, None] = None
 ):
     try:
         label_id = decrypt_label_id(download_req.token)
@@ -110,5 +109,9 @@ async def download(
     if label is None:
         raise HTTPException(404, "Can't find requested cv, try to request once more")
 
-    asyncio.create_task(save_download_by_label_id(label.id, utm_source, utm_campaign))
+    utm_params = None
+    if hasattr(request.state, 'utm_params'):
+        utm_params = request.state.utm_params
+
+    asyncio.create_task(save_download_by_label_id(label.id, utm_params=utm_params))
     return FileResponse(label.path_to_file, filename=label.file_name, content_disposition_type="attachment")
