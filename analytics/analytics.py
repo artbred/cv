@@ -6,9 +6,11 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
+from dotenv import load_dotenv
+load_dotenv('../.env')
 
-def load_data(is_fake):
-    data_file = f'../data/analytics/analytics{"_fake" if is_fake else ""}.pickle'
+def load_data(is_mock):
+    data_file = f'../data/analytics/analytics{"_mock" if is_mock else ""}.pickle'
     with open(data_file, 'rb') as f:
         data = pickle.load(f)
     return data
@@ -139,10 +141,10 @@ def display_app_analytics(data):
 def main():
     st.title('artbred.io analytics dashboard')
 
-    is_fake = os.path.exists("../data/analytics/analytics_fake.pickle")
-    data = load_data(is_fake)
+    is_mock = eval(os.getenv("MOCK", "False"))
+    data = load_data(is_mock)
 
-    if is_fake:
+    if is_mock:
         st.sidebar.write("You are now watching fake data, I will update analytics once I gather real one")
 
     web_analytics_tab, app_analytics_tab = st.tabs(["Web analytics", "App analytics"])
