@@ -6,6 +6,7 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
+from datetime import timedelta, datetime
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -61,21 +62,62 @@ def display_web_analytics(data):
     referrers_ct.header("Referrers (not filtered)")
     referrers_ct.dataframe(referrers_data)
 
-    total_pageviews = histogram_data['pageviews'].sum()
-    total_visitors = histogram_data['visitors'].sum()
-
-    calc_ct.write(f"Total pageviews for the selected interval is: {total_pageviews}")
-    calc_ct.write(f"Total visitors for the selected interval is: {total_visitors}")
-
-    average_stats = histogram_data.mean()
-
-    calc_ct.write(f'The average pageviews for the selected interval is: {average_stats["pageviews"]:.2f}')
-    calc_ct.write(f'The average visitors for the selected interval is: {average_stats["visitors"]:.2f}')
+    # Plot for visitors by weekday
 
     visitors_by_weekday = histogram_data.groupby(histogram_data.index.weekday)['visitors'].sum()
     fig = go.Figure(data=[go.Bar(x=['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], y=visitors_by_weekday.values)])
     fig.update_layout(title='Visitors by Weekday', xaxis_title='Day of the week', yaxis_title='Visitors')
-    st.plotly_chart(fig)
+    calc_ct.plotly_chart(fig)
+
+    # Calculate metrics
+
+    total_histogram_sums = histogram_data.sum()
+    average_stats = histogram_data.mean()
+
+    calc_ct.metric(label="Total pageviews", value=total_histogram_sums['pageviews'])
+    calc_ct.metric(label="Total visitors", value=total_histogram_sums['visitors'])
+    calc_ct.metric(label="Daily average pageviews", value=f"{average_stats['pageviews']:.2f}")
+    calc_ct.metric(label="Daily average visitors", value=f"{average_stats['visitors']:.2f}")
+
+    metric_days_range_str = st.text_input(
+        'Enter the number of days for which you want to calculate metrics'
+    )
+
+    if not metric_days_range_str:
+       return
+        
+    try:
+        metric_days_range = int(metric_days_range_str)
+        if metric_days_range <= 1:
+            st.error("The number of days must be more than one")
+            return
+
+        start_metrict_date = datetime.combine(date_range_selected[1], datetime.min.time()) - timedelta(days=metric_days_range)
+        if start_metrict_date < date_range[0]:
+            st.error(f"You have gone beyond the time boundary {date_range[0]}, max interval is {len(date_range) - 1} days")
+            return
+        
+    except ValueError:
+        st.error("Input must be an interger")
+        return
+
+    metric_date_range = pd.date_range(
+        start=start_metrict_date, end=date_range_selected[1], 
+        inclusive='right', freq='1D'
+    )
+
+    if len(metric_date_range) < 2:
+        st.error("The selected date range is too short. Please select a date range of at least 2 days")
+        return
+
+    histogram_metric_data = histogram_data.loc[metric_date_range]
+
+    sums = histogram_metric_data.sum()
+    delta = histogram_metric_data.iloc[-1] - histogram_metric_data.iloc[0]
+
+    st.metric(label=f"Total pageviews for last {metric_days_range_str} days", value=sums['pageviews'], delta=delta['pageviews'].item())
+    st.metric(label=f"Total visitors for last {metric_days_range_str} days", value=sums['visitors'], delta=delta['visitors'].item())
+
 
 
 def display_app_analytics(data):
