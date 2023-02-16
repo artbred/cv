@@ -1,6 +1,7 @@
 FROM python:3.9-slim
 
 COPY ./analytics /analytics
+COPY .env .
 WORKDIR /analytics
 
 RUN apt-get update && apt-get install -y \
