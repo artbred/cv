@@ -79,6 +79,7 @@ def display_web_analytics(data):
     calc_ct.metric(label="Daily average pageviews", value=f"{average_stats['pageviews']:.2f}")
     calc_ct.metric(label="Daily average visitors", value=f"{average_stats['visitors']:.2f}")
 
+    # We can't create metrics for interval less than 2
     if len(date_range) <= 2:
         return
 
