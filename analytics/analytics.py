@@ -141,7 +141,7 @@ def display_app_analytics(data):
 def main():
     st.title('artbred.io analytics dashboard')
 
-    is_mock = eval(os.getenv("MOCK", "False"))
+    is_mock = eval(os.getenv("MOCK", "True"))
     data = load_data(is_mock)
 
     if is_mock:
