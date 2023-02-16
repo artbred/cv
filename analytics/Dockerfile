@@ -17,4 +17,4 @@ RUN pip3 install -r requirements.txt
 
 EXPOSE 8501
 
-ENTRYPOINT ["streamlit", "run", "analytics.py", "--server.port", "8501", "--server.address=0.0.0.0", "--server.enableCORS=false",  "--server.enableXsrfProtection=false", "--server.enableWebsocketCompression=false"]
+ENTRYPOINT ["streamlit", "run", "analytics.py", "--server.port", "8501", "--server.address=0.0.0.0"]
