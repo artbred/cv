@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from dotenv import load_dotenv
-load_dotenv('../.env')
+load_dotenv()
 
 def load_data(is_mock):
     data_file = f'../data/analytics/analytics{"_mock" if is_mock else ""}.pickle'
