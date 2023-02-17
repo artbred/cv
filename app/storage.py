@@ -8,7 +8,7 @@ from settings import dim, redis_host, redis_port
 
 downloads_by_label_id_set_key = "downloads_by_label_id"
 query_positions_set_key = "query_positions"
-utm_params_set_prefix_key = "utm_params:"
+requests_params_set_prefix_key = "requests:"
 
 labels_prefix_key = "labels:"
 vector_field_name = "embedding"
@@ -52,12 +52,13 @@ def decode_redis_data(src):
 
 
 @redis_connection_decorator
-async def save_utm_params(path, utm_params, conn: redis.StrictRedis = None):
+async def save_user_request(endpoint, utm_params=None, conn: redis.StrictRedis = None):
     timestamp = int(time.time())
-    key = f"{utm_params_set_prefix_key}{path}"
+    key = requests_params_set_prefix_key + endpoint
 
     data = {"timestamp": timestamp}
-    data.update(utm_params)
+    if utm_params:
+        data.update(utm_params)
 
     conn.zadd(key, {json.dumps(data): timestamp})
 
@@ -81,7 +82,6 @@ async def save_download_by_label_id(label_id: str, utm_params = None, conn: redi
     timestamp = int(time.time())
 
     data = {"timestamp": timestamp, "label_id": label_id}
-    
     if utm_params:
         data.update(utm_params)
 

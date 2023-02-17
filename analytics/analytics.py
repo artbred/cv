@@ -10,6 +10,7 @@ from datetime import timedelta, datetime
 from dotenv import load_dotenv
 load_dotenv()
 
+
 def load_data(is_mock):
     data_file = f'../data/analytics/analytics{"_mock" if is_mock else ""}.pickle'
     with open(data_file, 'rb') as f:
@@ -79,7 +80,7 @@ def display_web_analytics(data):
     calc_ct.metric(label="Daily average pageviews", value=f"{average_stats['pageviews']:.2f}")
     calc_ct.metric(label="Daily average visitors", value=f"{average_stats['visitors']:.2f}")
 
-    # We can't create metrics for interval less than 2
+    # We can't create metrics for interval less than 2 days
     if len(date_range) <= 2:
         return
 
@@ -142,10 +143,6 @@ def display_app_analytics(data):
 
     downloads = downloads.loc[date_range]
 
-    if downloads.empty:
-        st.info("No downloads available for selected period")
-        return
-
     count_downloads_by_label = downloads['label_id'].value_counts()
     count_downloads_by_position = pd.merge(count_downloads_by_label, labels, how='left', left_index=True, right_on='id')
     count_downloads_by_position = count_downloads_by_position.drop(columns=['id'])
@@ -167,17 +164,44 @@ def display_app_analytics(data):
     st.write("Utm campaigns for downloaded resumes")
     st.dataframe(sorted_campaign_counts)
 
-    histogram_data = data['simple_analytics']['histogram']
-    histogram_data = histogram_data.loc[date_range]
+    user_requests_data_endpoints = data['requests_params_endpoints']
+    requests_count = {}
 
-    total_visitors_count = histogram_data['visitors'].sum()
-    total_downloads_count = count_by_position['count'].sum()
+    try:
+        for endpoint in user_requests_data_endpoints:
+            user_requests_data_endpoints[endpoint] = user_requests_data_endpoints[endpoint].loc[date_range]
 
-    conv_rate = total_downloads_count / total_visitors_count * 100
-    if conv_rate >= 100: # too fake data
-        conv_rate = 3.14
+            requests_count[endpoint] = {}
+            requests_count[endpoint]['total_requests'] = len(user_requests_data_endpoints[endpoint])
+    except:
+        st.info("No downloads available for selected period")
+        return
 
-    st.metric("Conversion rate (downloads vs visitors)", f"{conv_rate:.2f}%")
+    score_requests_count = requests_count['score']['total_requests']
+    for _, row in count_by_position.iterrows():
+        conv_rate = row['count'] / score_requests_count * 100
+        st.metric(f"Conversion rate for {row['position']} (downloads vs scoring requests)", f"{conv_rate:.2f}%")
+
+    
+    funnel_labels = list(requests_count.keys())
+    funnel_values = [requests_count[endpoint]['total_requests'] for endpoint in funnel_labels]
+
+    fig = go.Figure(go.Funnel(
+        y=funnel_labels,
+        x=funnel_values,
+        textposition='inside',
+        marker={'color': ['blue', 'orange', 'green']},
+        textinfo='value+percent previous')
+    )
+
+    fig.update_layout(
+        title="How users progress from scoring positions to cv downloads",
+        margin=dict(t=50, l=0, r=0, b=0),
+        width=800, height=600
+    )
+
+    st.plotly_chart(fig)
+
 
 
 def main():
