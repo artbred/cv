@@ -12,7 +12,8 @@ load_dotenv()
 
 
 def load_data(is_mock):
-    data_file = f'../data/analytics/analytics{"_mock" if is_mock else ""}.pickle'
+    file_name = 'analytics_mock' if is_mock else 'analytics'
+    data_file = f'../data/analytics/{file_name}.pickle'
     with open(data_file, 'rb') as f:
         data = pickle.load(f)
     return data
@@ -165,26 +166,28 @@ def display_app_analytics(data):
     st.dataframe(sorted_campaign_counts)
 
     user_requests_data_endpoints = data['requests_params_endpoints']
-    requests_count = {}
+    requests_count_list = []
 
     try:
         for endpoint in user_requests_data_endpoints:
             user_requests_data_endpoints[endpoint] = user_requests_data_endpoints[endpoint].loc[date_range]
-
-            requests_count[endpoint] = {}
-            requests_count[endpoint]['total_requests'] = len(user_requests_data_endpoints[endpoint])
+            requests_count_list.append({"endpoint": endpoint, "total_requests": len(user_requests_data_endpoints[endpoint])})
     except:
         st.info("No downloads available for selected period")
         return
 
-    score_requests_count = requests_count['score']['total_requests']
+    requests_count = pd.DataFrame(requests_count_list, columns=['endpoint', 'total_requests'])
+    requests_count = requests_count.sort_values(by='total_requests', ascending=False)
+
+    score_requests_count = requests_count.loc[requests_count['endpoint'] == 'score', 'total_requests'].values[0]
+
     for _, row in count_by_position.iterrows():
         conv_rate = row['count'] / score_requests_count * 100
         st.metric(f"Conversion rate for {row['position']} (downloads vs scoring requests)", f"{conv_rate:.2f}%")
 
-    
-    funnel_labels = list(requests_count.keys())
-    funnel_values = [requests_count[endpoint]['total_requests'] for endpoint in funnel_labels]
+
+    funnel_labels = requests_count['endpoint'].tolist()
+    funnel_values = requests_count['total_requests'].tolist()
 
     fig = go.Figure(go.Funnel(
         y=funnel_labels,

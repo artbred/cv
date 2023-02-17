@@ -53,7 +53,7 @@ def decode_redis_data(src):
 
 @redis_connection_decorator
 async def save_user_request(endpoint, utm_params=None, conn: redis.StrictRedis = None):
-    timestamp = int(time.time())
+    timestamp = int(time.time()) # This might cause collisions, so it is a drawback that can be easily fixed
     key = requests_params_set_prefix_key + endpoint
 
     data = {"timestamp": timestamp}
