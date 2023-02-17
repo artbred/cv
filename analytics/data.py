@@ -186,9 +186,9 @@ from storage import create_redis_connection, labels_prefix_key, requests_params_
 def api_call(query_position, **kwargs):
     params = {k: v for k, v in kwargs.items() if v is not None}
     query_url = '&'.join([f"{k}={v}" for k, v in params.items()])
-    response = requests.post("http://127.0.0.1:80/score?" + query_url, json.dumps({"position": query_position}))
+    response = requests.post("http://app/score?" + query_url, json.dumps({"position": query_position}))
     if response.status_code == 200:
-        requests.post("http://127.0.0.1:80/download?" + query_url, json.dumps({"token": response.json()['token']}))
+        requests.post("http://app/download?" + query_url, json.dumps({"token": response.json()['token']}))
 
 
 def fill_redis_with_fake_data():
