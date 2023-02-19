@@ -25,13 +25,14 @@ This is a small research project that can determine which resources work best fo
 
 ## What data do I collect?
 
-- For each request to the API (/score, /download) I store utm_campaign and utm_source
+- I store the fact of querying API and utm_params (if any)
 
 - I keep the text of user entered position and the similarity score (no utm's or ip)
 
 - Downloads for each cv with utm's (so I can evaluate conversions)
 
-- For the website I use [simple analytics](https://www.simpleanalytics.com)
+- For the website analytics I use [simple analytics](https://www.simpleanalytics.com)
+
 ## Analytics
 
 [View analytics dashboard](https://analytics.artbred.io)
@@ -42,5 +43,3 @@ Analytics consists of two tabs
 
 - Web analytics (taken from simple analytics API)
 - App analytics (taken from data collected from my API)
-
-- Metrics are calculated from the previously choosen end-date (inclusive) and end-date - days (excluded)
