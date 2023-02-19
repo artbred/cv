@@ -184,6 +184,8 @@ from storage import create_redis_connection, labels_prefix_key, requests_params_
 
 
 def api_call(query_position, **kwargs):
+    time.sleep(0.5)
+
     params = {k: v for k, v in kwargs.items() if v is not None}
     query_url = '&'.join([f"{k}={v}" for k, v in params.items()])
     response = requests.post("http://127.0.0.1:8000/score?" + query_url, json.dumps({"position": query_position}))
