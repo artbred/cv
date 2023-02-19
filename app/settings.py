@@ -16,6 +16,7 @@ min_similarity_score = 0.85
 
 redis_host = os.getenv("REDIS_HOST")
 redis_port = int(os.getenv("REDIS_PORT"))
+redis_password = os.getenv("REDIS_PASSWORD")
 
 # Vector dimension, "text-embedding-ada-002" returns 1536
 dim = 1536

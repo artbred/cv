@@ -4,7 +4,7 @@ import time
 import redis
 from redis.commands.search.field import TextField, VectorField
 from redis.commands.search.query import Query
-from settings import dim, redis_host, redis_port
+from settings import dim, redis_host, redis_port, redis_password
 
 downloads_by_label_id_set_key = "downloads_by_label_id"
 query_positions_set_key = "query_positions"
@@ -17,7 +17,7 @@ vector_field_name_index = "id"
 jwt_set_key = "revoked_tokens"
 
 
-redis_pool = redis.ConnectionPool(host=redis_host, port=redis_port, db=0)  # decode_responses=True
+redis_pool = redis.ConnectionPool(host=redis_host, port=redis_port, db=0, username='default', password=redis_password)  # decode_responses=True
 
 
 def create_redis_connection():
