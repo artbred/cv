@@ -186,9 +186,9 @@ from storage import create_redis_connection, labels_prefix_key, requests_params_
 def api_call(query_position, **kwargs):
     params = {k: v for k, v in kwargs.items() if v is not None}
     query_url = '&'.join([f"{k}={v}" for k, v in params.items()])
-    response = requests.post("http://app/score?" + query_url, json.dumps({"position": query_position}))
+    response = requests.post("http://127.0.0.1:8000/score?" + query_url, json.dumps({"position": query_position}))
     if response.status_code == 200:
-        requests.post("http://app/download?" + query_url, json.dumps({"token": response.json()['token']}))
+        requests.post("http://127.0.0.1:8000/download?" + query_url, json.dumps({"token": response.json()['token']}))
 
 
 def fill_redis_with_fake_data():
@@ -220,6 +220,7 @@ def fill_redis_with_fake_data():
 
         api_call(position, utm_source=utm_source, utm_campaign=utm_campaign)
 
+
 def get_labels_data_from_redis(conn):
     labels_list = []
 
@@ -230,10 +231,11 @@ def get_labels_data_from_redis(conn):
 
     return pd.DataFrame(labels_list, columns=["id", "position"])
 
-def get_requests_params_from_redis(conn):
-    request_params = {}
 
-    time_now = int(time.time())
+def get_requests_params_from_redis(conn):
+    request_params_endpoints = {}
+
+    time_now = time.time()
     start_time = time_now - (days_ago * 24 * 60 * 60)
 
     for endpoint_request_key_byte in conn.keys(requests_params_set_prefix_key + "*"):
@@ -243,7 +245,7 @@ def get_requests_params_from_redis(conn):
         params_for_endpoint_byte = conn.zrangebyscore(endpoint_request_key, start_time, time_now)
         params_for_endpoint = decode_redis_data(params_for_endpoint_byte)
         params_for_endpoint_df = pd.DataFrame(params_for_endpoint)
-
+    
         # Replace unknown utm source / utm campaign with NaN
         params_for_endpoint_df.replace({
             'utm_source': {val: np.nan for val in set(params_for_endpoint_df['utm_source']) - set(unique_utm_sources) - {np.nan}},
@@ -252,10 +254,10 @@ def get_requests_params_from_redis(conn):
 
         params_for_endpoint_df.loc[:, "date"] = pd.to_datetime(params_for_endpoint_df['timestamp'], utc=True, unit='s').dt.date
         params_for_endpoint_df.set_index("date", inplace=True)
+    
+        request_params_endpoints[endpoint] = params_for_endpoint_df
 
-        request_params[endpoint] = params_for_endpoint_df
-
-    return request_params 
+    return request_params_endpoints
     
 
 def get_downloads_data_from_redis(conn):
@@ -266,7 +268,12 @@ def get_downloads_data_from_redis(conn):
     downloads_list = decode_redis_data(downloads_bytes)
     downloads_df = pd.DataFrame(downloads_list)
 
-    downloads_df["date"] = pd.to_datetime(downloads_df["timestamp"], utc=True, unit='s').dt.date
+    downloads_df.replace({
+        'utm_source': {val: np.nan for val in set(downloads_df['utm_source']) - set(unique_utm_sources) - {np.nan}},
+        'utm_campaign': {val: np.nan for val in set(downloads_df['utm_campaign']) - set(unique_utm_campaigns) - {np.nan}}
+    }, inplace=True)
+
+    downloads_df.loc[:, "date"] = pd.to_datetime(downloads_df["timestamp"], utc=True, unit='s').dt.date
     downloads_df.set_index("date", inplace=True)
 
     return downloads_df
@@ -280,9 +287,8 @@ def get_data_from_redis():
         return labels_df, requests_params_endpoints, downloads_df
     
     
-if mock:
+if mock and input("fill redis with fake data?") == "yes":
     fill_redis_with_fake_data()
-
 
 labels_df, requests_params_endpoints, downloads_df = get_data_from_redis()
 pprint(labels_df)

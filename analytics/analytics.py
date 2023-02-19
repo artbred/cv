@@ -173,7 +173,7 @@ def display_app_analytics(data):
             user_requests_data_endpoints[endpoint] = user_requests_data_endpoints[endpoint].loc[date_range]
             requests_count_list.append({"endpoint": endpoint, "total_requests": len(user_requests_data_endpoints[endpoint])})
     except:
-        st.info("No downloads available for selected period")
+        st.info("No requests to the API available for the selected period")
         return
 
     requests_count = pd.DataFrame(requests_count_list, columns=['endpoint', 'total_requests'])
