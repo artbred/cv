@@ -35,5 +35,5 @@ services:
             context: .
             dockerfile: analytics/Dockerfile
         volumes:
-            -./.env:/cv/analytics/.env
+            - ./.env:/cv/analytics/.env
             - ./data/analytics:/data/analytics
