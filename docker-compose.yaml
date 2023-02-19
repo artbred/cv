@@ -28,7 +28,6 @@ services:
             - redis
 
     analytics:
-        <<: *base
         restart: always
         ports:
             - 127.0.0.1:8501:8501
@@ -36,4 +35,5 @@ services:
             context: .
             dockerfile: analytics/Dockerfile
         volumes:
+            -./.env:/cv/analytics/.env
             - ./data/analytics:/data/analytics

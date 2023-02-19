@@ -20,6 +20,7 @@ convert:
 	cd analytics && jupytext --to py data.ipynb
 	# cd analytics && jupyter nbconvert --to python --TemplateExporter.exclude_input_prompt=True --TemplateExporter.exclude_output_prompt=True --TemplateExporter.exclude_markdown=True data.ipynb 
 
+
 .PHONY: collect
 collect:
 	docker-compose exec analytics python3 data.py
