@@ -8,7 +8,7 @@ from storage import jwt_token_is_revoked, revoke_jwt_token
 
 
 def encrypt_label_id(label_id: str):
-    payload = {"exp": int(time.time() + jwt_expiration_in_seconds), "label_id": label_id}
+    payload = {"exp": int(time.time_ns() + jwt_expiration_in_seconds), "label_id": label_id}
     return jwt.encode(payload, secret_key, algorithm="HS256")
 
 
